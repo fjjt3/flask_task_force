@@ -1,4 +1,14 @@
 from flask import Flask
-from my_app.hello.views import hello
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+
 app = Flask(__name__)
-app.register_blueprint(hello)
+app.config['SQLALCHEMY_DATABASE_URI'] ='sqlite:///c:/Users/fjimn/OneDrive/Escritorio/test.db'
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+from my_app.catalog.views import catalog
+app.register_blueprint(catalog)
+
+with app.app_context():
+    db.create_all()
