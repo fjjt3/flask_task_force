@@ -1,16 +1,13 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from redis import Redis
+from flask_mongoengine import MongoEngine
 
-redis = Redis()
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] ='sqlite:///c:/Users/fjimn/OneDrive/Escritorio/test.db'
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+app.config['MONGODB_SETTINGS'] = {'DB': 'my_catalog'}
+app.debug = True
+db = MongoEngine(app)
 
 from my_app.catalog.views import catalog
 app.register_blueprint(catalog)
 
-with app.app_context():
-    db.create_all()
+""" with app.app_context():
+    db.create_all() """
