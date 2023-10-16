@@ -1,6 +1,7 @@
 from flask import request, jsonify, Blueprint
 from my_app import db
 from my_app.catalog.models import Product, Category
+from redis import Redis
 
 catalog = Blueprint('catalog', __name__)
 @catalog.route('/')
@@ -11,6 +12,9 @@ def home():
 @catalog.route('/product/<id>')
 def product(id):
     product = Product.query.get_or_404(id)
+    product_key = 'product-%s' % product.id
+    redis.set(product_key, product.name)
+    redis.expire(product_key, 600)
     return 'Product - %s, $%s' % (product.name,
     product.price)
 
@@ -31,11 +35,12 @@ def create_product():
     name = request.form.get('name')
     price = request.form.get('price')
     categ_name = request.form.get('category')
+    company = request.form.get('company')
     category = Category.query.filter_by(name=categ_name).first()
 
     if not category:
         category = Category(categ_name)
-    product = Product(name, price, category)
+    product = Product(name, price, category, company)
     db.session.add(product)
     db.session.commit()
     return 'Product created.'
@@ -63,3 +68,10 @@ def categories():
             'price': product.price
         }
     return jsonify(res)
+
+@catalog.route('/recent-products')
+def recent_products():
+    keys_alive = redis.keys('product-*')
+    products = [redis.get(k).decode('utf-8') for k in
+        keys_alive]
+    return jsonify({'products': products})
